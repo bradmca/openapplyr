@@ -57,7 +57,7 @@ nsis:
 linux:
   icon: build/icon.png
   category: Office
-  maintainer: Shivashis Adhikari <176213315+shivashis-adhikari@users.noreply.github.com>
+  maintainer: bradmca <bradmca@users.noreply.github.com>
   target:
     - AppImage
     - deb

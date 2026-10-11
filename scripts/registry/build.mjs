@@ -10,7 +10,7 @@ const arg = (name, dflt) => {
 const PAGES = Number(arg('pages', '4'))
 const CONCURRENCY = Number(arg('concurrency', '8'))
 const MERGE = process.argv.includes('--merge')
-const UA = { 'User-Agent': 'OpenApplyr registry builder (+https://github.com/shivashis-adhikari/openapplyr)' }
+const UA = { 'User-Agent': 'OpenApplyr registry builder (+https://github.com/bradmca/openapplyr)' }
 
 const PATTERNS = [
   { ats: 'greenhouse', url: 'boards.greenhouse.io/*', slug: (u) => /boards\.greenhouse\.io\/([a-z0-9_-]+)/i.exec(u)?.[1] },

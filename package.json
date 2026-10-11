@@ -5,13 +5,13 @@
   "description": "Open-source, local-first job search agent: finds roles, tailors your resume, applies, follows up, and tracks every application.",
   "license": "AGPL-3.0-only",
   "author": "Shivashis Adhikari",
-  "homepage": "https://shivashis-adhikari.github.io/openapplyr/",
+  "homepage": "https://bradmca.github.io/openapplyr/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shivashis-adhikari/openapplyr.git"
+    "url": "git+https://github.com/bradmca/openapplyr.git"
   },
   "bugs": {
-    "url": "https://github.com/shivashis-adhikari/openapplyr/issues"
+    "url": "https://github.com/bradmca/openapplyr/issues"
   },
   "private": true,
   "type": "module",

@@ -11,22 +11,22 @@
 </p>
 
 <p align="center">
-  <a href="https://shivashis-adhikari.github.io/openapplyr/">Website</a> ·
-  <a href="https://shivashis-adhikari.github.io/openapplyr/#demo">Watch the demo</a> ·
+  <a href="https://bradmca.github.io/openapplyr/">Website</a> ·
+  <a href="https://bradmca.github.io/openapplyr/#demo">Watch the demo</a> ·
   <a href="#getting-started">Getting started</a> ·
   <a href="#questions">Questions</a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/shivashis-adhikari/openapplyr/actions/workflows/ci.yml"><img src="https://github.com/shivashis-adhikari/openapplyr/actions/workflows/ci.yml/badge.svg" alt="Tests"></a>
+  <a href="https://github.com/bradmca/openapplyr/actions/workflows/ci.yml"><img src="https://github.com/bradmca/openapplyr/actions/workflows/ci.yml/badge.svg" alt="Tests"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-0d2d20" alt="License: AGPL-3.0"></a>
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-64865c" alt="Platforms: macOS, Windows, Linux">
 </p>
 
 <p align="center">
-  <a href="https://shivashis-adhikari.github.io/openapplyr/#demo"><img src="docs/media/demo.gif" alt="OpenApplyr finding a job, showing why it fits, and preparing the application for approval" width="880"></a>
+  <a href="https://bradmca.github.io/openapplyr/#demo"><img src="docs/media/demo.gif" alt="OpenApplyr finding a job, showing why it fits, and preparing the application for approval" width="880"></a>
   <br>
-  <sub><a href="https://shivashis-adhikari.github.io/openapplyr/#demo">Watch the full 24-second demo with sound</a></sub>
+  <sub><a href="https://bradmca.github.io/openapplyr/#demo">Watch the full 24-second demo with sound</a></sub>
 </p>
 
 ## Why OpenApplyr
@@ -75,10 +75,10 @@ Download OpenApplyr for your system:
 
 | System | Download |
 |---|---|
-| macOS, Apple silicon | [OpenApplyr-mac-arm64.dmg](https://github.com/shivashis-adhikari/openapplyr/releases/latest/download/OpenApplyr-mac-arm64.dmg) |
-| macOS, Intel | [OpenApplyr-mac-x64.dmg](https://github.com/shivashis-adhikari/openapplyr/releases/latest/download/OpenApplyr-mac-x64.dmg) |
-| Windows | [OpenApplyr-windows-setup.exe](https://github.com/shivashis-adhikari/openapplyr/releases/latest/download/OpenApplyr-windows-setup.exe) |
-| Linux | [AppImage](https://github.com/shivashis-adhikari/openapplyr/releases/latest/download/OpenApplyr-linux-x86_64.AppImage) or [.deb](https://github.com/shivashis-adhikari/openapplyr/releases/latest/download/OpenApplyr-linux-amd64.deb) |
+| macOS, Apple silicon | [OpenApplyr-mac-arm64.dmg](https://github.com/bradmca/openapplyr/releases/latest/download/OpenApplyr-mac-arm64.dmg) |
+| macOS, Intel | [OpenApplyr-mac-x64.dmg](https://github.com/bradmca/openapplyr/releases/latest/download/OpenApplyr-mac-x64.dmg) |
+| Windows | [OpenApplyr-windows-setup.exe](https://github.com/bradmca/openapplyr/releases/latest/download/OpenApplyr-windows-setup.exe) |
+| Linux | [AppImage](https://github.com/bradmca/openapplyr/releases/latest/download/OpenApplyr-linux-x86_64.AppImage) or [.deb](https://github.com/bradmca/openapplyr/releases/latest/download/OpenApplyr-linux-amd64.deb) |
 
 You also need Google Chrome or Microsoft Edge, which OpenApplyr uses to fill in application forms.
 
@@ -90,7 +90,7 @@ The installers are not code-signed yet, so your system asks you to confirm the f
 You need [Node.js](https://nodejs.org) 22.13 or later.
 
 ```bash
-git clone https://github.com/shivashis-adhikari/openapplyr.git
+git clone https://github.com/bradmca/openapplyr.git
 cd openapplyr
 npm ci
 npm run dev
@@ -145,3 +145,5 @@ Bug reports, fixes and new job sites are all welcome. Start with [CONTRIBUTING.m
 ## License
 
 OpenApplyr is released under the [GNU AGPL-3.0](LICENSE). City data comes from [GeoNames](https://www.geonames.org) (CC BY 4.0). Fonts are used under the SIL Open Font License; their licenses are in `assets/fonts`.
+
+This repository is a fork of [shivashis-adhikari/openapplyr](https://github.com/shivashis-adhikari/openapplyr) by Shivashis Adhikari, maintained by [bradmca](https://github.com/bradmca) with modifications under the same license.

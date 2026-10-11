@@ -3,7 +3,7 @@
 // Usage: node scripts/fixtures/record-sources.mjs [kind...]
 import { writeFileSync } from 'node:fs'
 
-const UA = { 'User-Agent': 'OpenApplyr fixture recorder (+https://github.com/shivashis-adhikari/openapplyr)', Accept: 'application/json' }
+const UA = { 'User-Agent': 'OpenApplyr fixture recorder (+https://github.com/bradmca/openapplyr)', Accept: 'application/json' }
 const get = async (url, init = {}) => {
   const res = await fetch(url, { ...init, headers: { ...UA, ...(init.headers ?? {}) } })
   if (!res.ok) throw new Error(`${url} -> ${res.status}`)
