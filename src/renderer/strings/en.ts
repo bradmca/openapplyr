@@ -72,6 +72,7 @@ export const t = {
     skip: 'Skip',
     everything: 'All',
     loading: 'Loading',
+    elapsed: (s: number) => `${s}s`,
     notFound: 'This item no longer exists.',
     source: 'Source',
     reveal: 'Show in folder',

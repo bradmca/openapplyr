@@ -47,6 +47,8 @@ export const extractProfilePrompt = definePrompt<{ text: string }, Extracted>({
     'so accuracy matters more than completeness: an invented detail could become a false statement on an application.',
   describe: 'The resume as structured data.',
   maxOutputTokens: 8000,
+  // Extraction copies the source verbatim; a model's default temperature (some ship 1.0) invents values.
+  temperature: 0,
   user: ({ text }) =>
     [
       untrusted('resume', text),

@@ -1,5 +1,5 @@
 import { CaretDownIcon, CheckIcon, InfoIcon, MagnifyingGlassIcon, WarningCircleIcon, WarningIcon } from '@phosphor-icons/react'
-import type { ComponentProps, ReactNode } from 'react'
+import { useEffect, useState, type ComponentProps, type ReactNode } from 'react'
 import { t } from '../strings/en'
 import {
   Button as AriaButton,
@@ -245,9 +245,18 @@ export function Empty({ title, body, action, center }: { title: string; body?: s
 
 /** Network or model work in progress: a plain line with what is happening (no spinners, no jokes). */
 export function Working({ text }: { text: string }) {
+  // Local models can take many minutes; a running clock shows the call is still alive.
+  const [elapsed, setElapsed] = useState(0)
+  useEffect(() => {
+    const timer = setInterval(() => setElapsed((s) => s + 1), 1000)
+    return () => clearInterval(timer)
+  }, [])
   return (
     <div className="working" role="status" aria-live="polite">
-      <span>{text}</span>
+      <span>
+        {text}
+        {elapsed >= 5 ? ` — ${t.common.elapsed(elapsed)}` : ''}
+      </span>
       <div className="progress-line" />
     </div>
   )
