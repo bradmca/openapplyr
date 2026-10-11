@@ -6,7 +6,7 @@ import { Button, InlineAlert, RadioGroup, TextField } from '../components/ui'
 import { call, useApi } from '../lib/api'
 import { bridge } from '../lib/bridge'
 import { t } from '../strings/en'
-import { MailForm, ProviderForm } from './ConnectForms'
+import { MailForm, ProviderSetup } from './ConnectForms'
 import { FactsEditor, ImportResume } from './ProfileEditor'
 
 const STEPS = ['model', 'profile', 'facts', 'hunt', 'email'] as const
@@ -17,7 +17,6 @@ type Step = (typeof STEPS)[number]
  * facts forms ask for, one hunt, and (optionally) email.
  */
 export function Onboarding() {
-  const providers = useApi('ai.providers', undefined)
   const profileState = useApi('profile.get', undefined)
   const [step, setStep] = useState<Step>('model')
   const [draft, setDraft] = useState<ImportResult | null>(null)
@@ -89,17 +88,7 @@ export function Onboarding() {
           <>
             <h1 className="display">{t.onboarding.modelTitle}</h1>
             <p className="muted">{t.onboarding.modelBody}</p>
-            {providers.data && providers.data.length > 0 ? (
-              <div className="row">
-                <p>{providers.data.map((x) => x.label).join(', ')}</p>
-                <span className="spacer" />
-                <Button variant="primary" onPress={next}>
-                  {t.onboarding.next}
-                </Button>
-              </div>
-            ) : (
-              <ProviderForm onDone={next} />
-            )}
+            <ProviderSetup onDone={next} />
             <div>
               <Button variant="quiet" onPress={() => void bridge.host.openSample(true)}>
                 {t.onboarding.sample}

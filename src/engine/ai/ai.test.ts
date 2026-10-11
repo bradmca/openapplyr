@@ -117,6 +117,22 @@ describe('AiService.structured', () => {
     await expect(t.ai.structured(prompt, { name: 'a' }, { task: 't' })).rejects.toMatchObject({ code: 'RATE_LIMIT', permanent: false })
   })
 
+  it('maps transport failures with no HTTP status to clear messages', async () => {
+    const transport = (cause: unknown) => new APICallError({ message: 'x', url: 'http://127.0.0.1:11434/api/chat', requestBodyValues: {}, cause, isRetryable: false })
+    const coded = (code: string, msg: string) => Object.assign(new Error(msg), { code })
+    const t = setup('ollama', 'llama3.2')
+    t.providers.model = () => mockModel([{ error: transport(coded('ECONNREFUSED', 'connect ECONNREFUSED 127.0.0.1:11434')) }]).model
+    await expect(t.ai.structured(prompt, { name: 'a' }, { task: 't' })).rejects.toMatchObject({ code: 'LOCAL_DOWN', permanent: true })
+    t.providers.model = () => mockModel([{ error: transport(coded('UND_ERR_HEADERS_TIMEOUT', 'Headers Timeout')) }]).model
+    await expect(t.ai.structured(prompt, { name: 'a' }, { task: 't' })).rejects.toMatchObject({ code: 'TIMEOUT' })
+    t.providers.model = () => mockModel([{ error: transport(coded('UND_ERR_SOCKET', 'socket hang up')) }]).model
+    await expect(t.ai.structured(prompt, { name: 'a' }, { task: 't' })).rejects.toMatchObject({ code: 'PROVIDER_DOWN' })
+    // A remote provider unreachable is retried rather than declared permanent.
+    const remote = setup()
+    remote.providers.model = () => mockModel([{ error: transport(coded('ECONNREFUSED', 'connect ECONNREFUSED')) }]).model
+    await expect(remote.ai.structured(prompt, { name: 'a' }, { task: 't' })).rejects.toMatchObject({ code: 'LOCAL_DOWN', permanent: false })
+  })
+
   it('stops at the daily budget but lets free local models run', async () => {
     const t = setup()
     t.settings.update({ budget: { daily: 0.5 } })

@@ -1,11 +1,13 @@
+import { PlusIcon, TrashIcon } from '@phosphor-icons/react'
 import { useState } from 'react'
 import type { ProviderKind, ProviderSpec } from '../../shared/api/ai'
-import { Button, InlineAlert, Select, TextField, Working } from '../components/ui'
-import { call, useApi } from '../lib/api'
+import { Button, IconButton, InlineAlert, Select, TextField, Working } from '../components/ui'
+import { call, useAction, useApi } from '../lib/api'
 import { bridge } from '../lib/bridge'
+import { toast } from '../lib/toast'
 import { t } from '../strings/en'
 
-/** Adds a model provider, checks it answers, and assigns it to any role that has no model yet. */
+/** Adds a model provider, checks it answers, and makes it the model for every role. */
 export function ProviderForm({ onDone }: { onDone: () => void }) {
   const catalog = useApi('ai.catalog', undefined)
   const local = useApi('ai.detectLocal', undefined)
@@ -20,7 +22,7 @@ export function ProviderForm({ onDone }: { onDone: () => void }) {
     try {
       const p = await call('ai.saveProvider', { kind, fields })
       const withModels = p.models.length ? p : await call('ai.refreshModels', { id: p.id }).catch(() => p)
-      await call('ai.autoAssign', { providerId: withModels.id, onlyEmpty: true })
+      await call('ai.autoAssign', { providerId: withModels.id, onlyEmpty: false })
       onDone()
     } catch (e) {
       setError((e as Error).message)
@@ -58,6 +60,62 @@ export function ProviderForm({ onDone }: { onDone: () => void }) {
       </div>
       {busy && <Working text={t.settings.models.testing} />}
       {error && <InlineAlert tone="danger">{error}</InlineAlert>}
+    </div>
+  )
+}
+
+/**
+ * The onboarding model step: shows every saved provider (it may have failed to answer, so each can
+ * be tested, refreshed or removed), lets another be added, and only continues once a role has a model.
+ */
+export function ProviderSetup({ onDone }: { onDone: () => void }) {
+  const providers = useApi('ai.providers', undefined)
+  const roles = useApi('ai.roles', undefined)
+  const del = useAction('ai.deleteProvider')
+  const test = useAction('ai.test')
+  const refresh = useAction('ai.refreshModels')
+  const [adding, setAdding] = useState(false)
+  const list = providers.data ?? []
+  const ready = (roles.data ?? []).some((r) => r.modelId !== null)
+  if (list.length === 0) return <ProviderForm onDone={onDone} />
+  return (
+    <div className="stack">
+      <ul className="panel">
+        {list.map((p) => (
+          <li key={p.id} className="worklist-item" style={{ gridTemplateColumns: 'minmax(0,1fr) auto' }}>
+            <div className="stack" style={{ gap: 2 }}>
+              <span className="what">{p.label}</span>
+              <span className="why">{p.models.length ? t.settings.models.modelCount(p.models.length) : t.settings.models.noModels}</span>
+            </div>
+            <div className="row">
+              {p.models[0] ? (
+                <Button size="sm" isDisabled={test.isPending} onPress={() => test.mutate({ providerId: p.id, modelId: p.models[0]! }, { onSuccess: (r) => (r.ok ? toast.info(t.settings.models.testOk(r.latencyMs, p.models[0]!)) : toast.error(r.error ?? '')) })}>
+                  {t.settings.models.test}
+                </Button>
+              ) : (
+                <Button size="sm" isDisabled={refresh.isPending} onPress={() => refresh.mutate({ id: p.id })}>
+                  {t.settings.models.refresh}
+                </Button>
+              )}
+              <IconButton size="sm" label={t.settings.models.remove} icon={<TrashIcon aria-hidden />} onPress={() => del.mutate({ id: p.id })} />
+            </div>
+          </li>
+        ))}
+      </ul>
+      {adding ? (
+        <ProviderForm onDone={() => setAdding(false)} />
+      ) : (
+        <div className="row">
+          <Button onPress={() => setAdding(true)}>
+            <PlusIcon aria-hidden />
+            {t.settings.models.add}
+          </Button>
+          <span className="spacer" />
+          <Button variant="primary" isDisabled={!ready} onPress={onDone}>
+            {t.onboarding.next}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

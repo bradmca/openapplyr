@@ -172,16 +172,28 @@ export function registerAiHandlers(ctx: Ctx, providers: Providers, prices: Price
   })
 
   router.on('ai.detectLocal', async () => {
-    const tryList = async (url: string, pick: (j: unknown) => string[]) => {
-      try {
-        return pick(await ctx.http.getJson(url, { timeoutMs: 1500, retries: 0 }))
-      } catch {
-        return null
-      }
+    const tryList = async (urls: string[], pick: (j: unknown) => string[]) => {
+      const found = await Promise.all(
+        urls.map(async (url) => {
+          try {
+            return pick(await ctx.http.getJson(url, { timeoutMs: 3000, retries: 0 }))
+          } catch {
+            return null
+          }
+        }),
+      )
+      return found.find((models) => models && models.length > 0) ?? null
     }
+    // A local server can be bound to any loopback name or a custom host; try them all.
+    const envHost = process.env['OLLAMA_HOST']
+    const ollamaHost = envHost ? `http://${envHost.replace(/^https?:\/\//, '')}`.replace('http://0.0.0.0', 'http://127.0.0.1') : null
+    const ollamaBases = [...new Set([...(ollamaHost ? [ollamaHost] : []), 'http://127.0.0.1:11434', 'http://localhost:11434'])]
     const [ollama, lmstudio] = await Promise.all([
-      tryList('http://127.0.0.1:11434/api/tags', (j) => ((j as { models?: { name: string }[] }).models ?? []).map((m) => m.name)),
-      tryList('http://127.0.0.1:1234/v1/models', (j) => ((j as { data?: { id: string }[] }).data ?? []).map((m) => m.id)),
+      tryList(
+        ollamaBases.map((b) => `${b.replace(/\/+$/, '')}/api/tags`),
+        (j) => ((j as { models?: { name: string }[] }).models ?? []).map((m) => m.name),
+      ),
+      tryList(['http://127.0.0.1:1234/v1/models', 'http://localhost:1234/v1/models'], (j) => ((j as { data?: { id: string }[] }).data ?? []).map((m) => m.id)),
     ])
     return { ollama, lmstudio }
   })

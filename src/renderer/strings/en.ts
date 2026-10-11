@@ -694,6 +694,7 @@ export const t = {
       free: 'No charge',
       noPrice: 'No price known',
       modelCount: (n: number) => (n === 1 ? '1 model' : `${n} models`),
+      noModels: 'No models found',
     },
     email: {
       accounts: 'Accounts',

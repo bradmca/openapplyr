@@ -17,6 +17,7 @@ import { createXai } from '@ai-sdk/xai'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import type { LanguageModel } from 'ai'
 import { createOllama } from 'ollama-ai-provider-v2'
+import { Agent, fetch as undiciFetch } from 'undici'
 import type { FieldKey, ModelCapability, ProviderInfo, ProviderKind } from '../../shared/api/ai'
 import { type Db, json } from '../core/db'
 import { AppError } from '../core/errors'
@@ -48,6 +49,15 @@ const DEFAULT_BASE: Partial<Record<ProviderKind, string>> = {
   ollama: 'http://127.0.0.1:11434',
   lmstudio: 'http://127.0.0.1:1234/v1',
 }
+
+/**
+ * A local model can spend many minutes generating before the first byte comes back. Plain fetch
+ * gives up waiting for headers after five minutes, which reports as a meaningless "no status"
+ * error. Providers that can run on this computer get a dispatcher that waits far longer.
+ */
+const patientAgent = new Agent({ connectTimeout: 30_000, headersTimeout: 30 * 60_000, bodyTimeout: 0 })
+const patientFetch: typeof fetch = (input, init) =>
+  undiciFetch(input as Parameters<typeof undiciFetch>[0], { ...(init as object), dispatcher: patientAgent } as Parameters<typeof undiciFetch>[1]) as unknown as Promise<Response>
 
 function parseHeaders(text: string | undefined): Record<string, string> {
   const out: Record<string, string> = {}
@@ -236,13 +246,13 @@ export class Providers {
       case 'openrouter':
         return createOpenRouter({ apiKey: key, headers: { 'X-Title': 'OpenApplyr', 'HTTP-Referer': REPO_URL } }).chat(modelId)
       case 'ollama':
-        return createOllama({ baseURL: `${(base ?? DEFAULT_BASE.ollama!).replace(/\/$/, '')}/api` })(modelId)
+        return createOllama({ baseURL: `${(base ?? DEFAULT_BASE.ollama!).replace(/\/$/, '')}/api`, fetch: patientFetch })(modelId)
       case 'lmstudio':
-        return createOpenAICompatible({ name: 'lmstudio', baseURL: base ?? DEFAULT_BASE.lmstudio!, supportsStructuredOutputs: true })(modelId)
+        return createOpenAICompatible({ name: 'lmstudio', baseURL: base ?? DEFAULT_BASE.lmstudio!, supportsStructuredOutputs: true, fetch: patientFetch })(modelId)
       case 'openai-compatible':
-        return createOpenAICompatible({ name: 'custom', baseURL: base!, apiKey: key, headers, supportsStructuredOutputs: true })(modelId)
+        return createOpenAICompatible({ name: 'custom', baseURL: base!, apiKey: key, headers, supportsStructuredOutputs: true, fetch: patientFetch })(modelId)
       case 'anthropic-compatible':
-        return createAnthropic({ baseURL: base, apiKey: key ?? 'none', headers })(modelId)
+        return createAnthropic({ baseURL: base, apiKey: key ?? 'none', headers, fetch: patientFetch })(modelId)
       case 'mock':
         throw new Error('The mock provider is handled by the AI service.')
     }

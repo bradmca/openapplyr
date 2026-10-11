@@ -50,6 +50,7 @@ function Models() {
   const setRole = useAction('ai.setRole')
   const del = useAction('ai.deleteProvider')
   const test = useAction('ai.test')
+  const refresh = useAction('ai.refreshModels')
   const { s, patch } = useSettings()
   const [adding, setAdding] = useState(false)
   const options = (providers.data ?? []).flatMap((p) => p.models.map((m) => ({ id: `${p.id}::${m}`, label: `${p.label}: ${m}` })))
@@ -65,7 +66,7 @@ function Models() {
               <li key={p.id} className="worklist-item" style={{ gridTemplateColumns: 'minmax(0,1fr) auto' }}>
                 <div className="stack" style={{ gap: 2 }}>
                   <span className="what">{p.label}</span>
-                  <span className="why">{t.settings.models.modelCount(p.models.length)}</span>
+                  <span className="why">{p.models.length ? t.settings.models.modelCount(p.models.length) : t.settings.models.noModels}</span>
                 </div>
                 <div className="row">
                   {p.models[0] && (
@@ -73,6 +74,9 @@ function Models() {
                       {t.settings.models.test}
                     </Button>
                   )}
+                  <Button size="sm" isDisabled={refresh.isPending} onPress={() => refresh.mutate({ id: p.id })}>
+                    {t.settings.models.refresh}
+                  </Button>
                   <IconButton size="sm" label={t.settings.models.remove} icon={<TrashIcon aria-hidden />} onPress={() => del.mutate({ id: p.id })} />
                 </div>
               </li>

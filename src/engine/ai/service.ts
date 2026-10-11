@@ -7,6 +7,7 @@ import { AppError, errorMessage } from '../core/errors'
 import type { Bus } from '../core/events'
 import type { Logger } from '../core/log'
 import type { SettingsStore } from '../core/settings'
+import { specFor } from './catalog'
 import { record, spendSince, startOfDay, startOfMonth } from './ledger'
 import type { PriceBook } from './prices'
 import type { PromptDef } from './prompt'
@@ -24,6 +25,22 @@ const ROLE_FALLBACK: Record<Role, Role[]> = {
   writer: ['writer', 'review', 'agent', 'fast'],
   agent: ['agent', 'writer', 'review', 'fast'],
   review: ['review', 'writer', 'agent', 'fast'],
+}
+
+/** A local model call can take minutes; retrying multiplies the wait, so it gets at most one retry. */
+const retriesFor = (a: Assignment) => (specFor(a.kind).local ? 1 : 2)
+
+/** Walks the cause chain for a transport-level error code (undici, sockets, TLS). */
+function causeCode(err: unknown): string | null {
+  let e = err
+  for (let i = 0; e && i < 6; i++) {
+    if (!(e instanceof Error)) return null
+    const code = (e as { code?: unknown }).code
+    if (typeof code === 'string' && code) return code
+    if (/timeout/i.test(e.name)) return e.name
+    e = e.cause
+  }
+  return null
 }
 
 /** Pulls the first JSON object or array out of model text (handles code fences and leading prose). */
@@ -147,6 +164,20 @@ export class AiService {
         return new AppError('CONTEXT', `The input was too long for ${who}. Choose a model with a larger context window.`, { permanent: true, detail: e.message })
       }
       if (status >= 500) return new AppError('PROVIDER_DOWN', `${who} returned ${status}. OpenApplyr will retry.`, { detail: e.message })
+      if (status === 0) {
+        // No HTTP response at all: the request failed or was killed before the server answered.
+        const c = causeCode(e)
+        if (c && /timeout|timedout/i.test(c)) {
+          return new AppError('TIMEOUT', `${who} did not answer in time. A smaller or faster model may help.`, { detail: e.message })
+        }
+        if (c === 'ECONNREFUSED' || c === 'ENOTFOUND' || c === 'EHOSTUNREACH' || c === 'UND_ERR_CONNECT_TIMEOUT') {
+          const local = specFor(a.kind).local
+          return new AppError('LOCAL_DOWN', `${who} could not be reached.${local ? ' Start it and try again.' : ' Check that its address is right.'}`, { permanent: local, detail: e.message })
+        }
+        if (c === 'UND_ERR_SOCKET' || c === 'ECONNRESET' || c === 'EPIPE' || c === 'ECONNABORTED') {
+          return new AppError('PROVIDER_DOWN', `${who} dropped the connection. OpenApplyr will retry.`, { detail: e.message })
+        }
+      }
       return new AppError('AI_ERROR', `${who} returned an error (${status || 'no status'}).`, { detail: e.message, permanent: status >= 400 && status < 500 })
     }
     if (e instanceof Error && e.name === 'AbortError') return new AppError('ABORTED', 'Stopped.', { permanent: true })
@@ -203,7 +234,7 @@ export class AiService {
         output: Output.object({ schema: prompt.schema, name: prompt.id.replace(/[^a-zA-Z0-9_]/g, '_'), description: prompt.describe }),
         maxOutputTokens: prompt.maxOutputTokens ?? 4096,
         ...(prompt.temperature !== undefined ? { temperature: prompt.temperature } : {}),
-        maxRetries: 2,
+        maxRetries: retriesFor(a),
         ...(opts.signal ? { abortSignal: opts.signal } : {}),
       })
       const out = prompt.schema.parse(res.output)
@@ -234,7 +265,7 @@ export class AiService {
         system: jsonSystem,
         messages,
         maxOutputTokens: prompt.maxOutputTokens ?? 4096,
-        maxRetries: 2,
+        maxRetries: retriesFor(a),
         ...(opts.signal ? { abortSignal: opts.signal } : {}),
       })
       let problem: string
@@ -281,7 +312,7 @@ export class AiService {
         messages: opts.messages,
         ...(opts.tools ? { tools: opts.tools, toolChoice: opts.toolChoice ?? 'auto' } : {}),
         maxOutputTokens: opts.maxOutputTokens ?? 2048,
-        maxRetries: 2,
+        maxRetries: retriesFor(a),
         ...(opts.signal ? { abortSignal: opts.signal } : {}),
       })
       this.ledger(a, opts.role, opts, res.totalUsage, true)
